@@ -1,0 +1,213 @@
+#include <iostream>
+#include <vector>
+#include <unordered_map>
+using namespace std;
+
+// not required
+/*class snake {
+    int _head;
+    int _tail;
+    
+public:
+    snake(int head, int tail);
+    int getHead();
+    int getTail();
+};
+
+snake::snake(int head, int tail) {
+    _head = head;
+    _tail = tail;
+}
+int snake::getHead() {
+    return _head;
+}
+
+class ladder {
+    int _start;
+    int _end;
+public:
+    ladder(int start, int end);
+    int getStart();
+    int getEnd();
+};
+
+ladder::ladder(int start, int end) {
+    _start = start;
+    _end = end;
+}
+
+int ladder::getStart() {
+    return _start;
+}
+
+int ladder::getEnd() {
+    return _end;
+}*/
+
+class player {
+    string _name;
+    int _currPos;
+public:
+    player(string s);
+    string getName();
+    int getCurrPos();
+    void setCurrPos(int x);
+};
+
+player::player(string s) {
+    _name = s;
+    _currPos = 0;
+}
+
+string player::getName() {
+    return _name;
+}
+
+int player::getCurrPos() {
+    return _currPos;
+}
+
+void player::setCurrPos(int x) {
+    _currPos = x;
+}
+
+class ludo {
+    //std::vector<snake*> _snakes;
+    //std::vector<ladder*> _ladders;
+    
+    std::vector<player*> _players;
+    std::unordered_map<int, int> _hasSnake;
+    std::unordered_map<int, int> _hasLadder;
+    
+    std::vector<bool> _playing;
+    int _noOfPlayer, _min, _max, _maxCells;
+public:
+    ludo(int mn, int mx, int mxCells);
+    
+    void addSnake(int head, int tail);
+    void addLadder(int start, int end);
+    
+    void SetNoOfPlayers(int noOfPlayer);
+    void addPlayer(string s);
+    
+    int rollDice();
+    int checkSnakeOrLadder(int x);
+    void setNotPlaying(int id);
+    bool isPlaying(int id);
+    player* getCurrPlayer(int id);
+    bool play();
+};
+
+ludo::ludo(int mn, int mx, int mxCells) {
+    
+    _min = mn;
+    _max = mx;
+    _maxCells = mxCells;
+}
+
+void ludo::SetNoOfPlayers(int noOfPlayer) {
+    _noOfPlayer = noOfPlayer;
+    vector<bool> tmp(noOfPlayer, true);
+    _playing = tmp;
+}
+void ludo::addSnake(int head, int tail) {
+    //snake *snk = new snake(head, tail);
+    //_snakes.push_back(snk);
+    _hasSnake[head] = tail;
+}
+
+void ludo::addLadder(int start, int end) {
+    //ladder *ldr = new ladder(start, end);
+    //_ladders.push_back(ldr);
+    _hasLadder[start] = end;
+}
+
+void ludo::addPlayer(string s) {
+    player *p = new player(s);
+    _players.push_back(p);
+}
+
+int ludo::rollDice() {
+    int randNum = rand()%(_max-_min + 1) + _min;
+    return randNum;
+}
+
+int ludo::checkSnakeOrLadder(int x) {
+    while (_hasSnake[x] || _hasLadder[x]) {
+        if (_hasSnake[x]) {
+            x = x + _hasSnake[x];
+        }
+        if (_hasLadder[x]) {
+            x = x + _hasLadder[x];
+        }
+    }
+    
+    return x;
+}
+
+void ludo::setNotPlaying(int id) {
+    _playing[id] = false;
+}
+
+bool ludo::isPlaying(int id) {
+    return _playing[id];
+}
+
+player* ludo::getCurrPlayer(int id) {
+    return _players[id];
+}
+
+bool ludo::play() {
+    int noOfPlayer = _players.size();
+    int noOfWinner = 0;
+    int currPlayerId = -1;
+    while (noOfWinner < noOfPlayer - 1) {
+        currPlayerId = (currPlayerId + 1) % 2;
+        if (!isPlaying(currPlayerId)) {
+            continue;
+        }
+        player *p = getCurrPlayer(currPlayerId);
+        int currPos = p->getCurrPos();
+        int x = rollDice();
+        int nextPos = currPos + x;
+        nextPos = checkSnakeOrLadder(nextPos);
+        if (nextPos == _maxCells) {
+            noOfWinner++;
+            setNotPlaying(currPlayerId);
+            std::cout << p->getName() << " has won."<< std::endl;
+        } else if (nextPos > _maxCells) {
+            continue;
+        } else {
+            std::cout<<p->getName()<<" moved from "<< currPos <<" to "<<currPos + x <<" to "<< nextPos<<std::endl;
+            p->setCurrPos(nextPos);
+        }
+    }
+}
+
+int main() {
+	int noOfSnake, noOfPlayer, noOfLadder;
+	ludo * Ludo = new ludo (1, 6, 100);
+	cin >> noOfSnake;
+	while (noOfSnake--) {
+	    int head, tail;
+	    cin>> head>>tail;
+	    Ludo->addSnake(head, tail);
+	}
+	cin>>noOfLadder;
+	while (noOfLadder--) {
+	    int start, end;
+	    cin >> start >> end;
+	    Ludo->addLadder(start, end);
+	}
+	
+	cin >> noOfPlayer;
+	Ludo->SetNoOfPlayers(noOfPlayer);
+	while (noOfPlayer--) {
+	    string name;
+	    cin >> name;
+	    Ludo->addPlayer(name);
+	}
+	
+	Ludo->play();
+	return 0;
+}
